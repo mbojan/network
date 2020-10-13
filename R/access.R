@@ -1715,16 +1715,14 @@ network.dyadcount.network<-function(x,na.omit=TRUE,...){
 #
 #  Adjust for missing
 #
-  design <- get.network.attribute(x,"design")
-  if(!is.null(design)){
-   dyads <- dyads - network.edgecount(design)
-  }else{
-   design <- get.network.attribute(x,"mClist.design")
-   if(!is.null(design)){
-    dyads <- dyads - design$nedges
-   }else{
-    dyads <- dyads - network.naedgecount(x)
-   }
+  if(has.vertex.attribute(x, "design")) {
+    dyads <- dyads - network.edgecount(get.vertex.attribute(x, "design"))
+  } else {
+    if(has.vertex.attribute(x, "mClist.design")) {
+      dyads <- dyads - get.vertex.attribute(x, "mClist.design")$nedges
+    } else {
+      dyads <- dyads - network.naedgecount(x)
+    }
   }
  }
  dyads
