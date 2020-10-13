@@ -1,19 +1,22 @@
 # ----- checks for network edgecount ------
 
-test<-network.initialize(4)
-# directed
-expect_equal(network.dyadcount(test),12)
-# undirected
-test%n%'directed'<-FALSE
-expect_equal(network.dyadcount(test),6)
+test_that("network.dyadcount() correct", {
+  test<-network.initialize(4)
+  # directed
+  expect_equal(network.dyadcount(test),12)
+  # undirected
+  test%n%'directed'<-FALSE
+  expect_equal(network.dyadcount(test),6)
+})
 
-# loops allowed
-test%n%'loops'<-TRUE
-#undirected
-expect_equal(network.dyadcount(test),10)
-# directed
-test%n%'directed'<-TRUE
-expect_equal(network.dyadcount(test),16)
+test_that("loops allowed", {
+  test%n%'loops'<-TRUE
+  #undirected
+  expect_equal(network.dyadcount(test),10)
+  # directed
+  test%n%'directed'<-TRUE
+  expect_equal(network.dyadcount(test),16)
+})
 
 # directed bipartite
 test%n%'loops'<-FALSE
