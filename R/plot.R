@@ -1189,6 +1189,22 @@ plotArgs.network<-function(x,argName, argValue,d=NULL,edgetouse=NULL){
   # assign the value to a local variable with the appropriate name
   assign(argName,argValue)
   #Fill out vertex vectors; assume we're using attributes if chars used
+  
+  # TODO: WIP, refactoring the switch() code below
+  .fill.vertex.vector <- function(a, net, n) {
+    if(is.character(a) && (length(a)==1)) {
+      if(has.vertex.attribute(net, a)) {
+        rval <- rep(get.vertex.attribute(net, a), length=n)
+        if(all(is.na(rval))) {
+          stop("Attribute ", sQuote(temp), 
+               " had illegal missing values for label or was not present in plot.network.default.")
+          
+        }
+      } else {
+        
+      }
+    }
+  }
   # TODO: only one of the code blocks below should execute, set up as a switch?
   switch(argName,
       # ----- vertex labels ---------------------------
