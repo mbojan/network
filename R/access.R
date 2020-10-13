@@ -673,7 +673,7 @@ get.edge.attribute <- function(x, ..., el) {
 get.edge.attribute.network <- function(x, attrname, unlist=TRUE, na.omit=FALSE, null.na=FALSE, deleted.edges.omit=FALSE, ..., el) {
   if(is.network(x) && !has.edge.attribute(x, attrname)) {
     warning(
-      paste0("there is no attribute ", sQuote(attrname), " in ",
+      paste0("there is no edge attribute ", sQuote(attrname), " in ",
              sQuote(deparse(substitute(x))))
     )
   }
@@ -1031,7 +1031,7 @@ get.network.attribute <- function(x, ...) {
 get.network.attribute.network <- function(x, attrname, unlist=FALSE, ...) {
   if(!has.network.attribute(x, attrname)) {
     warning(
-      paste0("there is no attribute ", sQuote(attrname), " in ",
+      paste0("there is no network attribute ", sQuote(attrname), " in ",
              sQuote(deparse(substitute(x))))
     )
   }
