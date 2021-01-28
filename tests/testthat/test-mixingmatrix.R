@@ -220,3 +220,19 @@ test_that("NA rows & cols are shown for bipartite net unless useNA='no'", {
     as.integer(c(1, 0))
   )
 })
+
+
+
+# Simple network with tie values ------------------------------------------
+
+data("sampson", package = "ergm")
+# samplike
+# samplike %e% "nominations"
+# samplike %v% "group"
+# samplike %v% "cloisterville"
+
+test_that("just works for Sampson data", {
+  expect_silent(
+    mm <- mixingmatrix(samplike, attrname = "cloisterville", edge_attr = "nominations")
+  )
+})
