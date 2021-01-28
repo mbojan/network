@@ -233,6 +233,18 @@ data("sampson", package = "ergm")
 
 test_that("just works for Sampson data", {
   expect_silent(
+    mm <- mixingmatrix(samplike, attrname = "cloisterville")
+  )
+  expect_silent(
     mm <- mixingmatrix(samplike, attrname = "cloisterville", edge_attr = "nominations")
+  )
+})
+
+test_that("just works for Sampson data, missing values on vattr", {
+  net <- samplike
+  a <- net %v% "cloisterville"
+  net %v% "cloisterville" <- replace(a, 1, NA)
+  expect_silent(
+    mm <- mixingmatrix(net, attrname = "cloisterville", edge_attr = "nominations")
   )
 })

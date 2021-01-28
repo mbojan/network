@@ -168,7 +168,8 @@ mixingmatrix <- function(object, ...) UseMethod("mixingmatrix")
 #' # of tie sender and receiver (data from Drabek et al. 1981)
 #' data(emon)
 #' mixingmatrix(emon$LakePomona, "Sponsorship")
-mixingmatrix.network <- function(object, attrname, useNA = "ifany", expand.bipartite=FALSE, ...) {
+mixingmatrix.network <- function(object, attrname, useNA = "ifany", expand.bipartite=FALSE,
+                                 edge_attr = NULL, fun = sum, ...) {
   nw <- object
   if(missing(attrname)){
     stop("attrname argument is missing. mixingmatrix() requires an an attribute name")
@@ -176,6 +177,12 @@ mixingmatrix.network <- function(object, attrname, useNA = "ifany", expand.bipar
   if(!(attrname %in% list.vertex.attributes(object)))
     stop("vertex attribute ", sQuote(attrname), " not found in network ",
          sQuote(deparse(substitute(object))))
+  if(!is.null(edge_attr) && !(edge_attr %in% list.edge.attributes(object))) {
+    stop("edge attribute ", sQuote(edge_attr), " not found in network ",
+         sQuote(deparse(substitute(object))))
+  }
+  if(!is.null(edge_attr))
+    edgecov <- unlist(get.edge.attribute(nw, edge_attr))
   if(network.size(nw)==0L){
     warning("mixing matrices not well-defined for graphs with no vertices.")
     return(as.mixingmatrix(
@@ -211,16 +218,24 @@ mixingmatrix.network <- function(object, attrname, useNA = "ifany", expand.bipar
     warning("passing `exclude=NULL` to table() is not supported, ignoring")
     dots$exclude <- NULL
   }
-  tabu <- do.call(table, c(list(From=From, To=To, useNA=useNA), dots))
+  if(!is.null(edge_attr)) {
+    tabu <- as.table(matrix(
+      ave(edgecov, From, To, FUN=fun, ...),
+      nrow = length(unique(From)),
+      ncol = length(unique(To))
+    ))
+  } else {
+    tabu <- do.call(table, c(list(From=From, To=To, useNA=useNA), dots))
+  }
   if(!is.directed(nw) && !is.bipartite(nw)){
-    type <- "undirected"
     tabu <- tabu + t(tabu)
     diag(tabu) <- diag(tabu)%/%2L
   }
   as.mixingmatrix(
     tabu,
     directed = is.directed(object),
-    bipartite = is.bipartite(object)
+    bipartite = is.bipartite(object),
+    valued = !is.null(edge_attr)
   )
 }
 
@@ -275,12 +290,13 @@ mixingmatrix.network <- function(object, attrname, useNA = "ifany", expand.bipar
 # @return The matrix with attributes `directed` and `bipartite` of class
 #   `mixingmatrix` inheriting from `table`.
 
-as.mixingmatrix <- function(mat, directed, bipartite, ...) {
+as.mixingmatrix <- function(mat, directed, bipartite, valued, ...) {
   # Test/check/symmetrize here?
   structure(
     mat,
     directed = directed,
     bipartite = bipartite,
+    valued = valued,
     class = c("mixingmatrix", "table")
   )
 }
@@ -308,10 +324,10 @@ print.mixingmatrix <- function(x, ...) {
   m <- x
   rn <- rownames(x)
   cn <- colnames(x)  
-  if (!attr(x, "directed")) {
+  if (!attr(x, "directed") | attr(x, "valued")) {
     dimnames(m) <- list(rn, cn)
     on.exit(
-      message("Note:  Marginal totals can be misleading for undirected mixing matrices.")  
+      message("Note:  Marginal totals can be misleading for undirected or valued mixing matrices.")  
     )
   } else {
     dimnames(m) <- if(attr(x, "bipartite")) list(B1 = rn, B2 = cn) else list(From = rn, To = cn)
@@ -321,6 +337,7 @@ print.mixingmatrix <- function(x, ...) {
     m,
     directed = attr(x, "directed"),
     bipartite = attr(x, "bipartite"),
+    valued = attr(x, "valued"),
     class = "table"
   )
   print(m)
