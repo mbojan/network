@@ -41,7 +41,8 @@ test_that("NA rows & cols are present for emon$MtSi unless useNA='no'", {
       .Dimnames = list(From = c("1", "2", NA), To = c("1", "2",  NA)), 
       class = c("mixingmatrix", "table"), 
       directed = TRUE, 
-      bipartite = FALSE
+      bipartite = FALSE,
+      valued = FALSE
     )
   )
 } )
@@ -115,7 +116,8 @@ test_that("NA rows & cols are shown for undirected net unless useNA='no'", {
       class = c("mixingmatrix",  "table"),
       .Dimnames = list(From = c("1", NA), To = c("1", NA)),
       directed = FALSE, 
-      bipartite = FALSE
+      bipartite = FALSE,
+      valued = FALSE
     )
   )
 
@@ -225,6 +227,45 @@ test_that("NA rows & cols are shown for bipartite net unless useNA='no'", {
 
 # Simple network with tie values ------------------------------------------
 
+el <- matrix(
+  byrow=TRUE, ncol=2,
+  c(
+    1,2,
+    2,3,
+    3,4,
+    4,1
+  )
+)
+net <- as.network(el, directed=FALSE)
+net %v% "a" <- c("black", "red")[c(1, 1, 2, 2)]
+net %v% "aNA" <- replace(net %v% "a", 2, NA)
+net %e% "weight" <- c(1,2,3,4)
+# plot(net, vertex.col="a", edge.label = "weight", displaylabels = TRUE, vertex.cex=2)
+
+
+test_that("it works correctly for weighted undirected network", {
+  expect_silent(
+    mm <- mixingmatrix(net, "a", edge_attr = "weight")
+  )
+  expect_equivalent(
+    as.integer(mm),
+    as.integer(matrix(c(1, 6, 6, 3), 2, 2))
+  )
+})
+
+test_that("it works correctly for weighted undirected network with NA on vertex attribute", {
+  expect_silent(
+    mm <- mixingmatrix(net, "aNA", edge_attr = "weight")
+  )
+  expect_identical(dim(mm), c(3L, 3L))
+  expect_identical(
+    as.integer(mm),
+    as.integer(matrix(c(NA, 4, 1, 4, 3, 2, 1, 2, NA), 3, 3))
+  )
+})
+
+
+
 data("sampson", package = "ergm")
 # samplike
 # samplike %e% "nominations"
@@ -233,10 +274,8 @@ data("sampson", package = "ergm")
 
 test_that("just works for Sampson data", {
   expect_silent(
-    mm <- mixingmatrix(samplike, attrname = "cloisterville")
-  )
-  expect_silent(
-    mm <- mixingmatrix(samplike, attrname = "cloisterville", edge_attr = "nominations")
+    mm <- mixingmatrix(samplike, attrname = "cloisterville", 
+                       edge_attr = "nominations", fun = mean)
   )
 })
 
@@ -246,5 +285,67 @@ test_that("just works for Sampson data, missing values on vattr", {
   net %v% "cloisterville" <- replace(a, 1, NA)
   expect_silent(
     mm <- mixingmatrix(net, attrname = "cloisterville", edge_attr = "nominations")
+  )
+  expect_identical(mm[3,3], as.numeric(NA))
+})
+
+
+
+# Bipartite networks with tie values --------------------------------------
+
+am <- matrix(0, 5, 5)
+am[1,3] <- am[1,4] <- am[2,3] <- am[2,5] <-  1
+net <- as.network(am, directed=FALSE, bipartite=2)
+net %v% "mode" <- c(1,1,2,2,2)
+net %v% "a" <- c(1,2,3,4,4) # Common vertex attribute
+net %v% "awithNA" <- c(1,2,NA, 4,NA)
+set.edge.attribute(net, "weight", value = seq(1, network.size(net)))
+
+# plot(
+#   net,
+#   vertex.col="a",
+#   vertex.sides = ifelse(get.vertex.attribute(net, "mode") == 2, 50, 4),
+#   edge.label = "weight",
+#   displaylabels = TRUE,
+#   vertex.cex=2
+# )
+
+test_that("just works for bipartite network with weights", {
+  expect_silent(
+    mm <- mixingmatrix(net, attrname="a", edge_attr = "weight", 
+                       expand.bipartite = FALSE)
+  )
+  expect_identical(
+    as.integer(mm),
+    as.integer(matrix(c(1,3,2,4), 2, 2))
+  )
+  
+  expect_silent(
+     mm <- mixingmatrix(net, attrname="a", edge_attr = "weight", 
+                        expand.bipartite = TRUE)
+  )
+  expect_identical(
+    as.integer(mm[1:2,3:4]),
+    as.integer(matrix(c(1,3,2,4), 2, 2))
+  )
+  expect_true(all(is.na(mm[1:4,1:2])))
+})
+
+test_that("just works ofr bipartite network with weights, NAs on attribute", {
+  expect_silent(
+    mm <- mixingmatrix(net, attrname="awithNA", edge_attr = "weight", 
+                       expand.bipartite = FALSE)
+  )
+  expect_identical(
+    as.integer(mm),
+    as.integer(matrix(c(2, NA, NA, 1, 7, NA), 3, 2))
+  )
+  expect_silent(
+    mm <- mixingmatrix(net, attrname="awithNA", edge_attr = "weight", 
+                       expand.bipartite = FALSE, useNA='no')
+  )
+  expect_identical(
+    as.integer(mm),
+    as.integer(matrix(c(2, NA)), 2, 1)
   )
 })

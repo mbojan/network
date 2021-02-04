@@ -208,9 +208,19 @@ mixingmatrix.network <- function(object, attrname, useNA = "ifany", expand.bipar
     From <- factor(nodecov[el[,1L]], levels=u)
     if(!expand.bipartite) u <- sort(unique(nodecov[(nb1+1L):network.size(nw)]))
     To <- factor(nodecov[el[,2L]], levels=u)
-  }else{
-    From <- factor(nodecov[el[,1L]], levels=u)
-    To <- factor(nodecov[el[,2L]], levels=u)
+  } else {
+    if(!is.directed(nw)) {
+      elattr <- t(apply(
+        cbind(nodecov[el[,1]], nodecov[el[,2]]), 
+        1, 
+        sort, na.last = TRUE
+      ))
+      From <- factor(elattr[,1L], levels=u)
+      To <- factor(elattr[,2L], levels=u)
+    } else {
+      From <- factor(nodecov[el[,1L]], levels=u)
+      To <- factor(nodecov[el[,2L]], levels=u)
+    }
   }
   if(any(is.na(nodecov)) && useNA == "ifany") useNA <- "always"
   dots <- list(...)
@@ -219,17 +229,19 @@ mixingmatrix.network <- function(object, attrname, useNA = "ifany", expand.bipar
     dots$exclude <- NULL
   }
   if(!is.null(edge_attr)) {
-    tabu <- as.table(matrix(
-      ave(edgecov, From, To, FUN=fun, ...),
-      nrow = length(unique(From)),
-      ncol = length(unique(To))
-    ))
+    # Mimicing the logic of `table(useNA=)`
+    if(useNA == "always") { # Already set if any NAs present
+      From <- addNA(From)
+      To <- addNA(To)
+    }
+    tabu <- as.table(tapply(edgecov, list(From=From, To=To), fun, ...))
   } else {
     tabu <- do.call(table, c(list(From=From, To=To, useNA=useNA), dots))
   }
   if(!is.directed(nw) && !is.bipartite(nw)){
-    tabu <- tabu + t(tabu)
-    diag(tabu) <- diag(tabu)%/%2L
+    # tabu <- tabu + t(tabu)
+    # diag(tabu) <- diag(tabu)%/%2L
+    tabu[lower.tri(tabu)] <- tabu[upper.tri(tabu)]
   }
   as.mixingmatrix(
     tabu,
