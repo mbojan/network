@@ -266,28 +266,6 @@ test_that("it works correctly for weighted undirected network with NA on vertex 
 
 
 
-data("sampson", package = "ergm")
-# samplike
-# samplike %e% "nominations"
-# samplike %v% "group"
-# samplike %v% "cloisterville"
-
-test_that("just works for Sampson data", {
-  expect_silent(
-    mm <- mixingmatrix(samplike, attrname = "cloisterville", 
-                       edge_attr = "nominations", fun = mean)
-  )
-})
-
-test_that("just works for Sampson data, missing values on vattr", {
-  net <- samplike
-  a <- net %v% "cloisterville"
-  net %v% "cloisterville" <- replace(a, 1, NA)
-  expect_silent(
-    mm <- mixingmatrix(net, attrname = "cloisterville", edge_attr = "nominations")
-  )
-  expect_identical(mm[3,3], as.numeric(NA))
-})
 
 
 
