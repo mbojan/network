@@ -138,7 +138,13 @@ mixingmatrix <- function(object, ...) UseMethod("mixingmatrix")
 #'   \code{\link{table}}. By default (\code{useNA = "ifany"}) if there are any
 #'   \code{NA}s on the attribute corresponding row \emph{and} column will be
 #'   contained in the result. See Details.
-#' @param ... arguments passed to \code{\link{table}}.
+#' @param edge_attr character, optional name of an edge attribute. If provided,
+#'   instead o counts will contain values of `fun` based on the values of that
+#'   attribute.
+#' @param fun function or name of a function that will be used to aggregate
+#'   tie values, passed to [tapply()]
+#' @param ... arguments passed to \code{\link{table}} or to `fun` if `edge_attr`
+#'   is not `NULL`
 #'
 #' @details Handling of missing values on the attribute \code{attrname} almost
 #'   follows similar logic to \code{\link{table}}. If there are \code{NA}s on
@@ -148,6 +154,9 @@ mixingmatrix <- function(object, ...) UseMethod("mixingmatrix")
 #'   \code{useNA="always"}). Also for that reason passing \code{exclude}
 #'   parameter with \code{NULL}, \code{NA} or \code{NaN} is ignored with a
 #'   warning as it may break the symmetry.
+#'   
+#'   If `edge_attr` is not `NULL` the value for the empty cells (with no ties)
+#'   will be `NA` but printed as blanks.
 #'
 #' @return Function `mixingmatrix()` returns an object of class `mixingmatrix`
 #'   extending `table` with a cross-tabulation of edges in the `object`
@@ -165,7 +174,7 @@ mixingmatrix <- function(object, ...) UseMethod("mixingmatrix")
 #' @export
 #' @examples
 #' # Interaction ties between Lake Pomona SAR organizations by sponsorship type
-#' # of tie sender and receiver (data from Drabek et al. 1981)
+#' # of tie sender and receiver (directed network data from Drabek et al. 1981)
 #' data(emon)
 #' mixingmatrix(emon$LakePomona, "Sponsorship")
 mixingmatrix.network <- function(object, attrname, useNA = "ifany", expand.bipartite=FALSE,

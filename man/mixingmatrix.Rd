@@ -12,7 +12,15 @@
 \usage{
 mixingmatrix(object, ...)
 
-\method{mixingmatrix}{network}(object, attrname, useNA = "ifany", expand.bipartite = FALSE, ...)
+\method{mixingmatrix}{network}(
+  object,
+  attrname,
+  useNA = "ifany",
+  expand.bipartite = FALSE,
+  edge_attr = NULL,
+  fun = sum,
+  ...
+)
 
 \method{[[}{mixingmatrix}(x, ...)
 
@@ -28,7 +36,8 @@ mixingmatrix(object, ...)
 \item{object}{a network or some other data structure for which a mixing
 matrix is meaningful.}
 
-\item{...}{arguments passed to \code{\link{table}}.}
+\item{...}{arguments passed to \code{\link{table}} or to \code{fun} if \code{edge_attr}
+is not \code{NULL}}
 
 \item{attrname}{a vertex attribute name.}
 
@@ -41,6 +50,13 @@ contained in the result. See Details.}
 the \emph{square} mixing matrix representing every level of \code{attrname} against
 every other level, or a \emph{rectangular} matrix considering only levels
 present in each bipartition?}
+
+\item{edge_attr}{character, optional name of an edge attribute. If provided,
+instead o counts will contain values of \code{fun} based on the values of that
+attribute.}
+
+\item{fun}{function or name of a function that will be used to aggregate
+tie values, passed to \code{\link[=tapply]{tapply()}}}
 
 \item{x}{mixingmatrix object}
 
@@ -75,6 +91,9 @@ is square (essentially calling \code{\link{table}} with
 \code{useNA="always"}). Also for that reason passing \code{exclude}
 parameter with \code{NULL}, \code{NA} or \code{NaN} is ignored with a
 warning as it may break the symmetry.
+
+If \code{edge_attr} is not \code{NULL} the value for the empty cells (with no ties)
+will be \code{NA} but printed as blanks.
 }
 \note{
 The \code{$} and \code{[[} methods are included only for backward-compatiblity
@@ -82,7 +101,7 @@ reason and will become defunct in future releases of the package.
 }
 \examples{
 # Interaction ties between Lake Pomona SAR organizations by sponsorship type
-# of tie sender and receiver (data from Drabek et al. 1981)
+# of tie sender and receiver (directed network data from Drabek et al. 1981)
 data(emon)
 mixingmatrix(emon$LakePomona, "Sponsorship")
 }
